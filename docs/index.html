@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Batting Outcome Explorer</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3250;
+    --text: #e2e8f0;
+    --muted: #8892b0;
+    --accent: #7c8ff0;
+    --green: #34d399;
+    --red: #f87171;
+    --single:   #93c5fd;
+    --double:   #60a5fa;
+    --triple:   #2563eb;
+    --homerun:  #1e3a8a;
+    --walk:     #34d399;
+    --strikeout:#fca5a5;
+    --groundout:#ef4444;
+    --flyout:   #991b1b;
+    --other:    #6b7280;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.82rem;
+    margin-bottom: 16px;
+  }
+
+  /* --- Tab bar --- */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .tab {
+    padding: 8px 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active {
+    color: #fff;
+    border-bottom-color: var(--accent);
+  }
+
+  /* --- Filters --- */
+  .filters {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .filter-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .toggle-row {
+    display: flex;
+    gap: 0;
+  }
+  .toggle-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 18px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .toggle-btn:first-child { border-radius: 6px 0 0 6px; }
+  .toggle-btn:last-child  { border-radius: 0 6px 6px 0; }
+  .toggle-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* --- Layout --- */
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 20px;
+  }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  /* --- Count grid --- */
+  .grid-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .count-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .count-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+  }
+  .count-card:hover { border-color: var(--accent); }
+  .count-card.selected {
+    border-color: var(--accent);
+    background: var(--surface2);
+  }
+  .count-label {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+  .count-n {
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-weight: 400;
+  }
+  .mini-bar {
+    height: 10px;
+    border-radius: 4px;
+    display: flex;
+    overflow: hidden;
+    gap: 1px;
+  }
+  .mini-seg {
+    height: 100%;
+    transition: flex 0.3s;
+  }
+
+  /* --- Detail panel --- */
+  .detail-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .detail-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .detail-count {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.03em;
+  }
+  .detail-meta {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .chart-wrap {
+    position: relative;
+    height: 260px;
+  }
+  .legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 16px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.78rem;
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .legend-name { color: var(--muted); flex: 1; }
+  .legend-pct  { font-weight: 600; color: var(--text); min-width: 38px; text-align: right; }
+  .legend-raw  { color: var(--muted); font-size: 0.72rem; min-width: 42px; text-align: right; }
+
+  .placeholder {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    text-align: center;
+    min-height: 200px;
+  }
+
+  /* --- Hypothesis tab --- */
+  .hyp-intro {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 20px;
+    line-height: 1.6;
+    max-width: 640px;
+  }
+  .hyp-card-body {
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .obp-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+  .obp-val {
+    font-weight: 600;
+    color: var(--text);
+  }
+  .delta-badge {
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    align-self: flex-start;
+  }
+  .delta-badge.positive {
+    background: rgba(52, 211, 153, 0.15);
+    color: var(--green);
+  }
+  .delta-badge.negative {
+    background: rgba(248, 113, 113, 0.12);
+    color: var(--red);
+  }
+  .delta-badge.neutral {
+    background: rgba(107, 114, 128, 0.15);
+    color: var(--muted);
+  }
+  .obp-bar-wrap {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--surface2);
+    overflow: hidden;
+    display: flex;
+    gap: 2px;
+  }
+  .obp-seg-opp {
+    height: 100%;
+    background: var(--green);
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+  .obp-seg-same {
+    height: 100%;
+    background: var(--muted);
+    opacity: 0.5;
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+
+  /* Hypothesis detail */
+  .hyp-detail-header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .hyp-detail-count {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.03em;
+  }
+  .hyp-detail-delta {
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .hyp-legend {
+    display: flex;
+    gap: 18px;
+    font-size: 0.78rem;
+    align-items: center;
+  }
+  .hyp-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .hyp-legend-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+  }
+  .hyp-legend-label { color: var(--muted); }
+  .hyp-pa-note {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Batting Outcome Explorer</h1>
+<p class="subtitle">MLB 2022–2024 Statcast · 555,995 plate appearances</p>
+
+<div class="tab-bar">
+  <button class="tab active" id="tab-explorer">Outcomes Explorer</button>
+  <button class="tab" id="tab-hypothesis">Platoon Advantage</button>
+</div>
+
+<!-- ===== TAB 1: Outcomes Explorer ===== -->
+<div id="pane-explorer">
+  <div class="filters">
+    <div class="filter-group">
+      <div class="filter-label">Batter Handedness</div>
+      <div class="toggle-row">
+        <button class="toggle-btn active" id="stand-R">R</button>
+        <button class="toggle-btn" id="stand-L">L</button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">Pitcher Handedness</div>
+      <div class="toggle-row">
+        <button class="toggle-btn active" id="throws-R">R</button>
+        <button class="toggle-btn" id="throws-L">L</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div>
+      <div class="grid-title">Click a count to inspect</div>
+      <div class="count-grid" id="count-grid"></div>
+    </div>
+    <div class="detail-panel" id="detail-panel">
+      <div class="placeholder">Select a count to see outcome breakdown</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 2: Platoon Advantage ===== -->
+<div id="pane-hypothesis" style="display:none">
+  <p class="hyp-intro">
+    Does the platoon advantage hold across all counts? Comparing
+    <strong style="color:var(--green)">opposite-handedness</strong> matchups (RHB vs LHP &amp; LHB vs RHP)
+    against <strong style="color:var(--muted)">same-handedness</strong> (RHB vs RHP &amp; LHB vs LHP)
+    using OBP (hits + walks) as the metric.
+  </p>
+  <div class="layout">
+    <div>
+      <div class="grid-title">Click a count to inspect by outcome</div>
+      <div class="count-grid" id="hyp-grid"></div>
+    </div>
+    <div class="detail-panel" id="hyp-detail-panel">
+      <div class="placeholder">Select a count to compare outcomes</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const OUTCOMES = ["single","double","triple","home_run","walk","strikeout","groundout","flyout","other"];
+const LABELS   = ["Single","Double","Triple","Home Run","Walk","Strikeout","Ground Out","Fly Out","Other"];
+const COLORS   = [
+  getComputedStyle(document.documentElement).getPropertyValue('--single').trim(),
+  getComputedStyle(document.documentElement).getPropertyValue('--double').trim(),
+  getComputedStyle(document.documentElement).getPropertyValue('--triple').trim(),
+  getComputedStyle(document.documentElement).getPropertyValue('--homerun').trim(),
+  getComputedStyle(document.documentElement).getPropertyValue('--walk').trim(),
+  getComputedStyle(document.documentElement).getPropertyValue('--strikeout').trim(),
+  getComputedStyle(document.documentElement).getPropertyValue('--groundout').trim(),
+  getComputedStyle(document.documentElement).getPropertyValue('--flyout').trim(),
+  getComputedStyle(document.documentElement).getPropertyValue('--other').trim(),
+];
+
+const OBP_OUTCOMES = ["single","double","triple","home_run","walk"];
+
+const COUNT_ORDER = [
+  {b:0,s:0},{b:1,s:0},{b:2,s:0},{b:3,s:0},
+  {b:0,s:1},{b:1,s:1},{b:2,s:1},{b:3,s:1},
+  {b:0,s:2},{b:1,s:2},{b:2,s:2},{b:3,s:2},
+];
+
+let rawData = [];
+let state = { stand: "R", p_throws: "R", balls: null, strikes: null };
+let hypState = { balls: null, strikes: null };
+let detailChart = null;
+let hypChart = null;
+
+function lookup(stand, p_throws, balls, strikes) {
+  return rawData.find(r =>
+    r.stand === stand && r.p_throws === p_throws &&
+    r.balls === balls && r.strikes === strikes
+  );
+}
+
+function obp(rec) {
+  if (!rec) return 0;
+  return OBP_OUTCOMES.reduce((s, o) => s + (rec.props[o] || 0), 0);
+}
+
+// Weighted-average props across two records
+function poolRecords(r1, r2) {
+  if (!r1 && !r2) return null;
+  if (!r1) return { props: r2.props, total: r2.total };
+  if (!r2) return { props: r1.props, total: r1.total };
+  const total = r1.total + r2.total;
+  const props = {};
+  OUTCOMES.forEach(o => {
+    props[o] = (r1.props[o] * r1.total + r2.props[o] * r2.total) / total;
+  });
+  return { props, total };
+}
+
+function computeHypothesis(balls, strikes) {
+  const rVl = lookup("R", "L", balls, strikes); // RHB vs LHP — opposite
+  const lVr = lookup("L", "R", balls, strikes); // LHB vs RHP — opposite
+  const rVr = lookup("R", "R", balls, strikes); // RHB vs RHP — same
+  const lVl = lookup("L", "L", balls, strikes); // LHB vs LHP — same
+  const opposite = poolRecords(rVl, lVr);
+  const same     = poolRecords(rVr, lVl);
+  const delta = obp(opposite) - obp(same);
+  return { opposite, same, delta };
+}
+
+function fmt(v) { return (v * 100).toFixed(1) + "%"; }
+function fmtN(n) { return n >= 1000 ? (n/1000).toFixed(1)+"k" : n; }
+function fmtDelta(d) {
+  const sign = d >= 0 ? "+" : "";
+  return sign + (d * 100).toFixed(1) + " pts";
+}
+
+// ===================== TAB 1: Explorer =====================
+
+function buildGrid() {
+  const grid = document.getElementById("count-grid");
+  grid.innerHTML = "";
+
+  COUNT_ORDER.forEach(({b, s}) => {
+    const rec = lookup(state.stand, state.p_throws, b, s);
+    const card = document.createElement("div");
+    card.className = "count-card" + (state.balls === b && state.strikes === s ? " selected" : "");
+
+    const props = rec ? rec.props : {};
+    const total = rec ? rec.total : 0;
+    const segs = OUTCOMES.map((o, i) => {
+      const p = props[o] || 0;
+      return `<div class="mini-seg" style="background:${COLORS[i]};flex:${p}"></div>`;
+    }).join("");
+
+    card.innerHTML = `
+      <div class="count-label">
+        ${b}-${s}
+        <span class="count-n">${fmtN(total)} PA</span>
+      </div>
+      <div class="mini-bar">${segs}</div>
+    `;
+    card.addEventListener("click", () => {
+      state.balls = b; state.strikes = s;
+      document.querySelectorAll("#count-grid .count-card").forEach(c => c.classList.remove("selected"));
+      card.classList.add("selected");
+      renderDetail();
+    });
+    grid.appendChild(card);
+  });
+}
+
+function renderDetail() {
+  const panel = document.getElementById("detail-panel");
+  const rec = lookup(state.stand, state.p_throws, state.balls, state.strikes);
+  if (!rec) {
+    panel.innerHTML = `<div class="placeholder">No data for this selection</div>`;
+    detailChart = null;
+    return;
+  }
+
+  panel.innerHTML = `
+    <div>
+      <div class="detail-header">
+        <div class="detail-count">${rec.balls}-${rec.strikes}</div>
+        <div class="detail-meta">
+          ${state.stand === "R" ? "RHB" : "LHB"} vs ${state.p_throws === "R" ? "RHP" : "LHP"}
+          &nbsp;·&nbsp; ${rec.total.toLocaleString()} PA
+        </div>
+      </div>
+    </div>
+    <div class="chart-wrap"><canvas id="detail-chart"></canvas></div>
+    <div class="legend" id="legend"></div>
+  `;
+
+  const sorted = OUTCOMES
+    .map((o, i) => ({ o, i, p: rec.props[o] || 0, n: rec.raw[o] || 0 }))
+    .filter(x => x.o !== "other")
+    .sort((a, b) => b.p - a.p)
+    .concat(OUTCOMES.map((o, i) => ({ o, i, p: rec.props[o] || 0, n: rec.raw[o] || 0 })).filter(x => x.o === "other"));
+
+  const legend = document.getElementById("legend");
+  sorted.forEach(({o, i, p, n}) => {
+    legend.innerHTML += `
+      <div class="legend-item">
+        <div class="legend-dot" style="background:${COLORS[i]}"></div>
+        <span class="legend-name">${LABELS[i]}</span>
+        <span class="legend-pct">${fmt(p)}</span>
+        <span class="legend-raw">${n.toLocaleString()}</span>
+      </div>`;
+  });
+
+  if (detailChart) { detailChart.destroy(); detailChart = null; }
+
+  const ctx = document.getElementById("detail-chart").getContext("2d");
+  detailChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: sorted.map(x => LABELS[OUTCOMES.indexOf(x.o)]),
+      datasets: [{
+        data: sorted.map(x => +(x.p * 100).toFixed(2)),
+        backgroundColor: sorted.map(x => COLORS[OUTCOMES.indexOf(x.o)]),
+        borderRadius: 4,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const item = sorted[ctx.dataIndex];
+              return ` ${ctx.formattedValue}%   (${item.n.toLocaleString()} PA)`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: "rgba(255,255,255,0.05)" },
+          ticks: { color: "#8892b0", callback: v => v + "%" },
+          border: { color: "transparent" },
+          max: Math.max(...sorted.map(x => x.p * 100)) * 1.15,
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: "#c4cde0", font: { size: 12 } },
+          border: { color: "transparent" },
+        }
+      }
+    }
+  });
+}
+
+// ===================== TAB 2: Hypothesis =====================
+
+function buildHypothesisGrid() {
+  const grid = document.getElementById("hyp-grid");
+  grid.innerHTML = "";
+
+  COUNT_ORDER.forEach(({b, s}) => {
+    const { opposite, same, delta } = computeHypothesis(b, s);
+    const card = document.createElement("div");
+    const isSelected = hypState.balls === b && hypState.strikes === s;
+    card.className = "count-card" + (isSelected ? " selected" : "");
+
+    const oppOBP = obp(opposite);
+    const sameOBP = obp(same);
+    const maxOBP = Math.max(oppOBP, sameOBP, 0.001);
+    const oppW = (oppOBP / maxOBP * 100).toFixed(1);
+    const sameW = (sameOBP / maxOBP * 100).toFixed(1);
+
+    const badgeCls = delta > 0.001 ? "positive" : delta < -0.001 ? "negative" : "neutral";
+
+    card.innerHTML = `
+      <div class="count-label">${b}-${s}</div>
+      <div class="hyp-card-body">
+        <span class="delta-badge ${badgeCls}">${fmtDelta(delta)}</span>
+        <div class="obp-row">
+          <span style="color:var(--green)">Opp <span class="obp-val">${fmt(oppOBP)}</span></span>
+          <span>Same <span class="obp-val">${fmt(sameOBP)}</span></span>
+        </div>
+        <div class="obp-bar-wrap">
+          <div class="obp-seg-opp" style="width:${oppW}%"></div>
+          <div class="obp-seg-same" style="width:${sameW}%"></div>
+        </div>
+      </div>
+    `;
+    card.addEventListener("click", () => {
+      hypState.balls = b; hypState.strikes = s;
+      document.querySelectorAll("#hyp-grid .count-card").forEach(c => c.classList.remove("selected"));
+      card.classList.add("selected");
+      renderHypothesisDetail();
+    });
+    grid.appendChild(card);
+  });
+}
+
+function renderHypothesisDetail() {
+  const panel = document.getElementById("hyp-detail-panel");
+  const { opposite, same, delta } = computeHypothesis(hypState.balls, hypState.strikes);
+
+  const deltaColor = delta > 0.001 ? "var(--green)" : delta < -0.001 ? "var(--red)" : "var(--muted)";
+  const deltaLabel = delta > 0.001
+    ? `+${(delta*100).toFixed(1)} pt OBP advantage for opposite`
+    : delta < -0.001
+    ? `${(delta*100).toFixed(1)} pt OBP — hypothesis fails this count`
+    : "No meaningful difference";
+
+  panel.innerHTML = `
+    <div class="hyp-detail-header">
+      <div class="hyp-detail-count">${hypState.balls}-${hypState.strikes}</div>
+      <div class="hyp-detail-delta" style="color:${deltaColor}">${deltaLabel}</div>
+      <div class="hyp-legend">
+        <div class="hyp-legend-item">
+          <div class="hyp-legend-swatch" style="background:var(--green)"></div>
+          <span class="hyp-legend-label">Opposite hand</span>
+        </div>
+        <div class="hyp-legend-item">
+          <div class="hyp-legend-swatch" style="background:var(--muted);opacity:0.6"></div>
+          <span class="hyp-legend-label">Same hand</span>
+        </div>
+      </div>
+    </div>
+    <div class="chart-wrap"><canvas id="hyp-chart"></canvas></div>
+    <div class="hyp-pa-note">
+      Opposite: ${opposite ? opposite.total.toLocaleString() : 0} PA &nbsp;·&nbsp;
+      Same: ${same ? same.total.toLocaleString() : 0} PA
+    </div>
+  `;
+
+  if (hypChart) { hypChart.destroy(); hypChart = null; }
+
+  const ctx = document.getElementById("hyp-chart").getContext("2d");
+
+  // Show all outcomes except "other" (last), sorted by avg proportion descending
+  const displayOutcomes = OUTCOMES
+    .map((o, i) => ({
+      o, i,
+      oppP: opposite ? (opposite.props[o] || 0) : 0,
+      sameP: same ? (same.props[o] || 0) : 0,
+    }))
+    .filter(x => x.o !== "other")
+    .sort((a, b) => ((b.oppP + b.sameP) / 2) - ((a.oppP + a.sameP) / 2));
+
+  hypChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: displayOutcomes.map(x => LABELS[x.i]),
+      datasets: [
+        {
+          label: "Opposite hand",
+          data: displayOutcomes.map(x => +(x.oppP * 100).toFixed(2)),
+          backgroundColor: "rgba(52, 211, 153, 0.75)",
+          borderRadius: 3,
+          borderSkipped: false,
+        },
+        {
+          label: "Same hand",
+          data: displayOutcomes.map(x => +(x.sameP * 100).toFixed(2)),
+          backgroundColor: "rgba(136, 146, 176, 0.4)",
+          borderRadius: 3,
+          borderSkipped: false,
+        }
+      ]
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.formattedValue}%`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: "rgba(255,255,255,0.05)" },
+          ticks: { color: "#8892b0", callback: v => v + "%" },
+          border: { color: "transparent" },
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: "#c4cde0", font: { size: 12 } },
+          border: { color: "transparent" },
+        }
+      }
+    }
+  });
+}
+
+// ===================== Tab switching =====================
+
+document.getElementById("tab-explorer").addEventListener("click", () => {
+  document.getElementById("pane-explorer").style.display = "";
+  document.getElementById("pane-hypothesis").style.display = "none";
+  document.getElementById("tab-explorer").classList.add("active");
+  document.getElementById("tab-hypothesis").classList.remove("active");
+});
+
+document.getElementById("tab-hypothesis").addEventListener("click", () => {
+  document.getElementById("pane-explorer").style.display = "none";
+  document.getElementById("pane-hypothesis").style.display = "";
+  document.getElementById("tab-explorer").classList.remove("active");
+  document.getElementById("tab-hypothesis").classList.add("active");
+  if (rawData.length) buildHypothesisGrid();
+});
+
+// ===================== Explorer filter wiring =====================
+
+["R","L"].forEach(hand => {
+  document.getElementById("stand-" + hand).addEventListener("click", () => {
+    state.stand = hand;
+    document.getElementById("stand-R").classList.toggle("active", hand === "R");
+    document.getElementById("stand-L").classList.toggle("active", hand === "L");
+    buildGrid();
+    if (state.balls !== null) renderDetail();
+  });
+  document.getElementById("throws-" + hand).addEventListener("click", () => {
+    state.p_throws = hand;
+    document.getElementById("throws-R").classList.toggle("active", hand === "R");
+    document.getElementById("throws-L").classList.toggle("active", hand === "L");
+    buildGrid();
+    if (state.balls !== null) renderDetail();
+  });
+});
+
+// ===================== Boot =====================
+
+fetch("data.json")
+  .then(r => r.json())
+  .then(data => {
+    rawData = data;
+    buildGrid();
+  });
+</script>
+</body>
+</html>
