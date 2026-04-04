@@ -249,6 +249,26 @@
     line-height: 1.6;
     max-width: 640px;
   }
+  .hyp-findings {
+    margin-top: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    font-size: 0.8rem;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  .hyp-findings strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .hyp-findings .verdict {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
   .hyp-card-body {
     margin-top: 6px;
     display: flex;
@@ -389,15 +409,24 @@
 <!-- ===== TAB 2: Platoon Advantage ===== -->
 <div id="pane-hypothesis" style="display:none">
   <p class="hyp-intro">
-    Does the platoon advantage hold across all counts? Comparing
-    <strong style="color:var(--green)">opposite-handedness</strong> matchups (RHB vs LHP &amp; LHB vs RHP)
+    <strong style="color:var(--text)">Hypothesis:</strong> batters have a meaningful OBP advantage when facing a pitcher of the opposite hand — the classic platoon split.<br>
+    Comparing <strong style="color:var(--green)">opposite-handedness</strong> matchups (RHB vs LHP &amp; LHB vs RHP)
     against <strong style="color:var(--muted)">same-handedness</strong> (RHB vs RHP &amp; LHB vs LHP)
-    using OBP (hits + walks) as the metric.
+    using OBP (hits + walks) across 555,995 plate appearances, 2022–2024.
   </p>
   <div class="layout">
     <div>
       <div class="grid-title">Click a count to inspect by outcome</div>
       <div class="count-grid" id="hyp-grid"></div>
+      <div class="hyp-findings">
+        <div class="verdict">Largely confirmed — but count-dependent and smaller than conventional wisdom suggests.</div>
+        The advantage holds in <strong>11 of 12 counts</strong>, but the effect size varies significantly.
+        The biggest edges appear at <strong>3-0 (+1.7 pts)</strong>, <strong>3-2 (+1.4 pts)</strong>, and <strong>0-2 (+1.2 pts)</strong> —
+        the counts where pitchers are most forced into predictable behavior (must throw a strike, or trying to expand the zone).
+        In neutral counts like <strong>1-1 and 2-1</strong>, where pitchers have more flexibility, the advantage nearly disappears.
+        This pattern points to <strong>pitcher behavior under pressure</strong> as the driver,
+        more than batter ability to read spin.
+      </div>
     </div>
     <div class="detail-panel" id="hyp-detail-panel">
       <div class="placeholder">Select a count to compare outcomes</div>
