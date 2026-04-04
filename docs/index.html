@@ -464,6 +464,7 @@ let hypState = { balls: null, strikes: null };
 let detailChart = null;
 let hypChart = null;
 let alluvialRendered = false;
+let alluvialFilter = null; // { id, isCount } or null
 
 // ===================== Data helpers =====================
 
@@ -515,7 +516,7 @@ function switchTab(id) {
     document.getElementById(`pane-${t}`).style.display = t === id ? "" : "none";
   });
   if (id === "hypothesis" && rawData.length) buildHypothesisGrid();
-  if (id === "alluvial"   && rawData.length && !alluvialRendered) {
+  if (id === "alluvial" && rawData.length && !alluvialRendered) {
     renderAlluvial();
     alluvialRendered = true;
   }
@@ -758,15 +759,14 @@ function buildAlluvialData() {
 
 function renderAlluvial() {
   const container = document.getElementById("alluvial-wrap");
-  // Remove previous SVG if any
   d3.select(container).selectAll("svg").remove();
 
   const tooltip = document.getElementById("alluvial-tooltip");
   tooltip.style.display = "none";
 
-  const W = container.clientWidth - 32; // subtract padding
+  const W = container.clientWidth - 32;
   const H = 580;
-  const ml = 62, mr = 110, mt = 12, mb = 12;
+  const ml = 62, mr = 110, mt = 28, mb = 12;
 
   const svg = d3.select(container)
     .append("svg")
@@ -775,13 +775,42 @@ function renderAlluvial() {
     .style("display", "block")
     .style("overflow", "visible");
 
-  const { nodes, links } = buildAlluvialData();
+  // ---- Filter data ----
+  let { nodes, links } = buildAlluvialData();
+  if (alluvialFilter) {
+    if (alluvialFilter.isCount) {
+      const activeLinks = links.filter(l => l.source === alluvialFilter.id);
+      const keep = new Set(activeLinks.map(l => l.target));
+      nodes = nodes.filter(n => n.id === alluvialFilter.id || (!n.isCount && keep.has(n.id)));
+      links = activeLinks;
+    } else {
+      const activeLinks = links.filter(l => l.target === alluvialFilter.id);
+      const keep = new Set(activeLinks.map(l => l.source));
+      nodes = nodes.filter(n => n.id === alluvialFilter.id || (n.isCount && keep.has(n.id)));
+      links = activeLinks;
+    }
+  }
 
+  // ---- Filter status label ----
+  if (alluvialFilter) {
+    const activeNode = nodes.find(n => n.id === alluvialFilter.id);
+    const label = activeNode ? activeNode.label : alluvialFilter.id;
+    svg.append("text")
+      .attr("x", W / 2)
+      .attr("y", 14)
+      .attr("text-anchor", "middle")
+      .attr("fill", "#7c8ff0")
+      .attr("font-size", 11)
+      .attr("font-family", "Inter, system-ui, sans-serif")
+      .text(`Filtered: ${label} — click again to reset`);
+  }
+
+  // ---- Sankey layout ----
   const sankey = d3.sankey()
     .nodeId(d => d.id)
     .nodeAlign(d3.sankeyLeft)
     .nodeWidth(14)
-    .nodePadding(7)
+    .nodePadding(alluvialFilter ? 10 : 7)
     .extent([[ml, mt], [W - mr, H - mb]]);
 
   const graph = sankey({
@@ -789,7 +818,6 @@ function renderAlluvial() {
     links: links.map(d => ({ ...d })),
   });
 
-  // Attach original color to laid-out nodes (sankey copies nodes)
   const colorById = {};
   nodes.forEach(n => { colorById[n.id] = n.color; });
   graph.nodes.forEach(n => { n.color = colorById[n.id]; });
@@ -817,6 +845,7 @@ function renderAlluvial() {
       .attr("height", d => Math.max(1, d.y1 - d.y0))
       .attr("fill", d => d.color)
       .attr("rx", 3)
+      .attr("opacity", d => (alluvialFilter && d.id === alluvialFilter.id) ? 1 : 0.85)
       .style("cursor", "pointer");
 
   // ---- Labels ----
@@ -828,10 +857,19 @@ function renderAlluvial() {
       .attr("y", d => (d.y0 + d.y1) / 2)
       .attr("dy", "0.35em")
       .attr("text-anchor", d => d.isCount ? "end" : "start")
-      .attr("fill", "#c4cde0")
+      .attr("fill", d => (alluvialFilter && d.id === alluvialFilter.id) ? "#fff" : "#c4cde0")
+      .attr("font-weight", d => (alluvialFilter && d.id === alluvialFilter.id) ? 700 : 400)
       .attr("font-size", 11)
       .attr("font-family", "Inter, system-ui, sans-serif")
       .text(d => d.label);
+
+  // ---- Click: nodes (toggle filter) ----
+  nodeSel.on("click", (event, d) => {
+    alluvialFilter = (alluvialFilter && alluvialFilter.id === d.id)
+      ? null
+      : { id: d.id, isCount: d.isCount };
+    renderAlluvial();
+  });
 
   // ---- Hover: nodes ----
   nodeSel
@@ -854,10 +892,8 @@ function renderAlluvial() {
     })
     .on("mousemove", event => {
       const rect = container.getBoundingClientRect();
-      const ex = event.clientX - rect.left;
-      const ey = event.clientY - rect.top;
-      tooltip.style.left = (ex + 14) + "px";
-      tooltip.style.top  = (ey - 10) + "px";
+      tooltip.style.left = (event.clientX - rect.left + 14) + "px";
+      tooltip.style.top  = (event.clientY - rect.top  - 10) + "px";
     })
     .on("mouseout", event => {
       d3.select(event.currentTarget).attr("stroke-opacity", 0.3);
