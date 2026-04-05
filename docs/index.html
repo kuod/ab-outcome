@@ -28,6 +28,17 @@
     --flyout:   #991b1b;
     --other:    #6b7280;
   }
+  body.light {
+    --bg: #f0f2fb;
+    --surface: #ffffff;
+    --surface2: #e8ecf6;
+    --border: #c5cce8;
+    --text: #1a1d2e;
+    --muted: #5a6480;
+    --accent: #4f5fe0;
+    --green: #059669;
+    --red: #dc2626;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: var(--bg);
@@ -35,19 +46,41 @@
     font-family: 'Inter', system-ui, sans-serif;
     min-height: 100vh;
     padding: 24px;
+    transition: background 0.25s, color 0.25s;
+  }
+  .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
   }
   h1 {
     font-size: 1.4rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--text);
     letter-spacing: -0.02em;
-    margin-bottom: 4px;
   }
   .subtitle {
     color: var(--muted);
     font-size: 0.82rem;
     margin-bottom: 16px;
   }
+  .theme-toggle {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+  }
+  .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
   /* --- Tab bar --- */
   .tab-bar {
@@ -55,6 +88,7 @@
     gap: 0;
     border-bottom: 1px solid var(--border);
     margin-bottom: 24px;
+    flex-wrap: wrap;
   }
   .tab {
     padding: 8px 20px;
@@ -72,7 +106,7 @@
   }
   .tab:hover { color: var(--text); }
   .tab.active {
-    color: #fff;
+    color: var(--text);
     border-bottom-color: var(--accent);
   }
 
@@ -86,11 +120,14 @@
   }
   .home-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
-    max-width: 900px;
+    max-width: 1100px;
   }
-  @media (max-width: 720px) {
+  @media (max-width: 900px) {
+    .home-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 560px) {
     .home-grid { grid-template-columns: 1fr; }
   }
   .home-card {
@@ -114,7 +151,7 @@
   .home-card-title {
     font-size: 1rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--text);
   }
   .home-card-desc {
     font-size: 0.8rem;
@@ -217,7 +254,7 @@
   .count-label {
     font-size: 1.05rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--text);
     margin-bottom: 6px;
     display: flex;
     align-items: baseline;
@@ -238,7 +275,7 @@
     gap: 16px;
   }
   .detail-header { display: flex; align-items: baseline; gap: 10px; }
-  .detail-count { font-size: 2rem; font-weight: 800; color: #fff; letter-spacing: -0.03em; }
+  .detail-count { font-size: 2rem; font-weight: 800; color: var(--text); letter-spacing: -0.03em; }
   .detail-meta { font-size: 0.78rem; color: var(--muted); }
   .chart-wrap { position: relative; height: 260px; }
   .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; }
@@ -275,7 +312,7 @@
   .obp-seg-opp  { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.3s; }
   .obp-seg-same { height: 100%; background: var(--muted); opacity: 0.5; border-radius: 3px; transition: width 0.3s; }
   .hyp-detail-header { display: flex; flex-direction: column; gap: 6px; }
-  .hyp-detail-count { font-size: 2rem; font-weight: 800; color: #fff; letter-spacing: -0.03em; }
+  .hyp-detail-count { font-size: 2rem; font-weight: 800; color: var(--text); letter-spacing: -0.03em; }
   .hyp-detail-delta { font-size: 0.85rem; font-weight: 600; }
   .hyp-legend { display: flex; gap: 18px; font-size: 0.78rem; align-items: center; }
   .hyp-legend-item { display: flex; align-items: center; gap: 6px; }
@@ -299,7 +336,7 @@
   .alluvial-tooltip {
     display: none;
     position: absolute;
-    background: #1e2236;
+    background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 7px;
     padding: 8px 12px;
@@ -310,12 +347,359 @@
     z-index: 10;
     max-width: 200px;
   }
-  .alluvial-tooltip strong { color: #fff; }
+  .alluvial-tooltip strong { color: var(--text); }
+
+  /* ================================================================
+     Simulator tab
+     ================================================================ */
+  .sim-intro {
+    font-size: 0.82rem; color: var(--muted); line-height: 1.6;
+    max-width: 640px; margin-bottom: 22px;
+  }
+  .sim-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 800px) {
+    .sim-layout { grid-template-columns: 1fr; }
+  }
+  .sim-left { display: flex; flex-direction: column; gap: 14px; }
+
+  /* matchup card */
+  .sim-matchup {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .sim-section-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .sim-matchup .filters { margin-bottom: 0; gap: 14px; flex-direction: column; align-items: flex-start; }
+
+  /* scoreboard card */
+  .sim-scoreboard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 20px 18px;
+  }
+  .sim-count-display {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 16px;
+  }
+  .sim-count-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 88px;
+  }
+  .sim-count-col-label {
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .sim-count-num {
+    font-size: 5rem;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+  }
+  @keyframes countBump {
+    0%   { transform: scale(1); }
+    35%  { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+  .sim-count-num.bump { animation: countBump 0.24s cubic-bezier(0.34,1.56,0.64,1); }
+  .sim-dash {
+    font-size: 3.2rem;
+    font-weight: 200;
+    color: var(--border);
+    line-height: 1;
+    padding-bottom: 20px;
+  }
+  .sim-dots {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  .sim-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: transparent;
+    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+  .sim-dot.ball-on {
+    background: var(--green);
+    border-color: var(--green);
+    box-shadow: 0 0 10px rgba(52,211,153,0.6);
+  }
+  .sim-dot.strike-on {
+    background: var(--red);
+    border-color: var(--red);
+    box-shadow: 0 0 10px rgba(248,113,113,0.6);
+  }
+
+  /* action buttons */
+  .sim-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .sim-btn {
+    padding: 13px 8px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+  .sim-btn:disabled { opacity: 0.25; cursor: not-allowed; pointer-events: none; }
+  .sim-btn-ball {
+    background: rgba(52,211,153,0.1);
+    color: var(--green);
+    border-color: rgba(52,211,153,0.3);
+  }
+  .sim-btn-ball:hover:not(:disabled) {
+    background: var(--green);
+    color: #000;
+    border-color: var(--green);
+    box-shadow: 0 4px 20px rgba(52,211,153,0.4);
+    transform: translateY(-1px);
+  }
+  .sim-btn-strike {
+    background: rgba(248,113,113,0.1);
+    color: var(--red);
+    border-color: rgba(248,113,113,0.3);
+  }
+  .sim-btn-strike:hover:not(:disabled) {
+    background: var(--red);
+    color: #fff;
+    border-color: var(--red);
+    box-shadow: 0 4px 20px rgba(248,113,113,0.4);
+    transform: translateY(-1px);
+  }
+  .sim-btn-reset {
+    grid-column: span 2;
+    background: transparent;
+    color: var(--muted);
+    border-color: var(--border);
+    font-size: 0.74rem;
+    padding: 9px;
+    letter-spacing: 0.08em;
+  }
+  .sim-btn-reset:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* outcomes panel */
+  .sim-outcomes-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 24px;
+    min-height: 320px;
+  }
+  .sim-outcomes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 20px;
+  }
+  .sim-outcomes-heading {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+  }
+  .sim-outcomes-meta {
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+  .sim-outcome-rows { display: flex; flex-direction: column; gap: 5px; }
+
+  .sim-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 13px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    transition: border-color 0.4s, box-shadow 0.4s;
+    position: relative;
+    overflow: hidden;
+  }
+  /* background fill layer */
+  .sim-row-bg {
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    opacity: 0;
+    transition: opacity 0.4s;
+    pointer-events: none;
+  }
+  .sim-row.top .sim-row-bg { opacity: 0.07; }
+
+  /* glow by outcome category */
+  .sim-row.top.cat-hit   { border-color: #60a5fa; box-shadow: 0 0 28px rgba(96,165,250,0.13); }
+  .sim-row.top.cat-walk  { border-color: var(--green); box-shadow: 0 0 28px rgba(52,211,153,0.15); }
+  .sim-row.top.cat-out   { border-color: var(--red); box-shadow: 0 0 28px rgba(248,113,113,0.13); }
+
+  @keyframes topPulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.82; }
+  }
+  .sim-row.top { animation: topPulse 3s ease-in-out infinite; }
+
+  /* z-index so content sits above bg fill */
+  .sim-row > *:not(.sim-row-bg) { position: relative; z-index: 1; }
+
+  .sim-row-rank {
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    min-width: 22px;
+    text-align: center;
+    transition: color 0.4s, font-size 0.3s;
+  }
+  .sim-row.top .sim-row-rank { font-size: 1rem; }
+  .sim-row.top.cat-hit  .sim-row-rank { color: #60a5fa; }
+  .sim-row.top.cat-walk .sim-row-rank { color: var(--green); }
+  .sim-row.top.cat-out  .sim-row-rank { color: var(--red); }
+
+  .sim-row-swatch {
+    width: 10px; height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    transition: box-shadow 0.4s;
+  }
+  .sim-row.top .sim-row-swatch { box-shadow: 0 0 8px currentColor; }
+
+  .sim-row-name {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--muted);
+    min-width: 82px;
+    transition: color 0.3s, font-weight 0.3s;
+  }
+  .sim-row.top .sim-row-name { font-weight: 700; color: var(--text); font-size: 0.88rem; }
+
+  .sim-bar-track {
+    flex: 1;
+    height: 7px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .sim-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .sim-row-pct {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    min-width: 44px;
+    text-align: right;
+    transition: color 0.3s, font-size 0.3s, font-weight 0.3s;
+  }
+  .sim-row.top .sim-row-pct { color: var(--text); font-size: 0.92rem; font-weight: 800; }
+
+  .sim-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 260px;
+    color: var(--muted);
+    font-size: 0.85rem;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* ================================================================
+     Count Paths tab
+     ================================================================ */
+  .count-paths-intro {
+    font-size: 0.82rem; color: var(--muted); line-height: 1.6;
+    max-width: 640px; margin-bottom: 16px;
+  }
+  .count-paths-legend {
+    display: flex; gap: 20px; flex-wrap: wrap;
+    margin-bottom: 16px; font-size: 0.76rem;
+  }
+  .count-paths-legend-item {
+    display: flex; align-items: center; gap: 8px; color: var(--muted);
+  }
+  .count-paths-swatch-line {
+    width: 28px; height: 5px; border-radius: 3px;
+  }
+  .count-paths-node-legend {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 16px; font-size: 0.73rem;
+  }
+  .count-paths-node-item {
+    display: flex; align-items: center; gap: 6px; color: var(--muted);
+  }
+  .count-paths-node-swatch {
+    width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0;
+  }
+  .count-paths-wrap {
+    position: relative;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .count-paths-tooltip {
+    display: none;
+    position: absolute;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 8px 12px;
+    font-size: 0.78rem;
+    color: var(--text);
+    line-height: 1.6;
+    pointer-events: none;
+    z-index: 10;
+    max-width: 220px;
+  }
+  .count-paths-tooltip strong { color: var(--text); }
+  .count-paths-note {
+    font-size: 0.7rem; color: var(--muted); margin-top: 10px; font-style: italic;
+  }
 </style>
 </head>
 <body>
 
-<h1>Batting Outcome Explorer</h1>
+<div class="header-row">
+  <h1>Batting Outcome Explorer</h1>
+  <button class="theme-toggle" id="theme-toggle">&#9788; Light</button>
+</div>
 <p class="subtitle">MLB 2022–2024 Statcast · 555,995 plate appearances</p>
 
 <div class="tab-bar">
@@ -323,12 +707,14 @@
   <button class="tab" data-tab="explorer">Outcomes Explorer</button>
   <button class="tab" data-tab="hypothesis">Platoon Advantage</button>
   <button class="tab" data-tab="alluvial">Count Flow</button>
+  <button class="tab" data-tab="count-paths">Count Paths</button>
+  <button class="tab" data-tab="simulator">Simulator</button>
 </div>
 
 <!-- ===== TAB: Home ===== -->
 <div id="pane-home">
   <p class="home-intro">
-    Three ways to explore how ball-strike counts shape batting outcomes across
+    Five ways to explore how ball-strike counts shape batting outcomes across
     555,995 MLB plate appearances from 2022–2024 Statcast data.
   </p>
   <div class="home-grid">
@@ -362,6 +748,26 @@
         in the count.
       </div>
       <button class="home-card-btn" data-goto="alluvial">Open &rarr;</button>
+    </div>
+    <div class="home-card">
+      <div class="home-card-num">04</div>
+      <div class="home-card-title">Simulator</div>
+      <div class="home-card-desc">
+        Build a count pitch-by-pitch and watch outcome probabilities update
+        live. See how each ball and strike shifts the most likely result
+        for any batter-pitcher matchup.
+      </div>
+      <button class="home-card-btn" data-goto="simulator">Open &rarr;</button>
+    </div>
+    <div class="home-card">
+      <div class="home-card-num">05</div>
+      <div class="home-card-title">Count Paths</div>
+      <div class="home-card-desc">
+        A Sankey diagram tracing how at-bats flow through every count from
+        0-0 to the final pitch. Green flows are balls, red are strikes — see
+        where PAs funnel and which counts are most frequently visited.
+      </div>
+      <button class="home-card-btn" data-goto="count-paths">Open &rarr;</button>
     </div>
   </div>
 </div>
@@ -435,6 +841,106 @@
   </div>
 </div>
 
+<!-- ===== TAB: Count Paths ===== -->
+<div id="pane-count-paths" style="display:none">
+  <p class="count-paths-intro">
+    How at-bats travel through the count. Each node is a ball-strike count; each edge is a pitch
+    — <span style="color:#34d399;font-weight:600">green = ball</span>,
+    <span style="color:#f87171;font-weight:600">red = strike</span>.
+    Node size reflects estimated PA visits. Node color reflects count advantage:
+    blue = batter-ahead, gray = even, red = pitcher-ahead.
+    Hover any node or edge for details.
+  </p>
+  <div class="count-paths-legend">
+    <div class="count-paths-legend-item">
+      <div class="count-paths-swatch-line" style="background:#34d399"></div> Ball (count advances)
+    </div>
+    <div class="count-paths-legend-item">
+      <div class="count-paths-swatch-line" style="background:#f87171"></div> Strike (count advances)
+    </div>
+  </div>
+  <div class="count-paths-node-legend">
+    <div class="count-paths-node-item"><div class="count-paths-node-swatch" style="background:#1e3a8a"></div>3-0 (B+3)</div>
+    <div class="count-paths-node-item"><div class="count-paths-node-swatch" style="background:#2563eb"></div>B+2</div>
+    <div class="count-paths-node-item"><div class="count-paths-node-swatch" style="background:#60a5fa"></div>B+1</div>
+    <div class="count-paths-node-item"><div class="count-paths-node-swatch" style="background:#6b7280"></div>Even</div>
+    <div class="count-paths-node-item"><div class="count-paths-node-swatch" style="background:#f87171"></div>S+1</div>
+    <div class="count-paths-node-item"><div class="count-paths-node-swatch" style="background:#dc2626"></div>0-2 (S+2)</div>
+  </div>
+  <div class="count-paths-wrap" id="count-paths-wrap">
+    <div class="count-paths-tooltip" id="count-paths-tooltip"></div>
+  </div>
+  <p class="count-paths-note">
+    Flow volumes are estimated from final-count PA distributions using forward propagation.
+    Exact pitch-by-pitch transitions require play-level data not in this dataset.
+  </p>
+</div>
+
+<!-- ===== TAB: Simulator ===== -->
+<div id="pane-simulator" style="display:none">
+  <p class="sim-intro">
+    Pick a matchup, then add balls and strikes pitch by pitch.
+    Outcome probabilities update live — the most likely result is highlighted.
+  </p>
+  <div class="sim-layout">
+
+    <!-- Left column: controls -->
+    <div class="sim-left">
+
+      <!-- Matchup -->
+      <div class="sim-matchup">
+        <div class="sim-section-label">Matchup</div>
+        <div class="filters" style="margin-bottom:0; gap:14px; flex-direction:column; align-items:flex-start;">
+          <div class="filter-group">
+            <div class="filter-label">Batter</div>
+            <div class="toggle-row">
+              <button class="toggle-btn active" id="sim-stand-R">R</button>
+              <button class="toggle-btn" id="sim-stand-L">L</button>
+            </div>
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">Pitcher</div>
+            <div class="toggle-row">
+              <button class="toggle-btn active" id="sim-throws-R">R</button>
+              <button class="toggle-btn" id="sim-throws-L">L</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scoreboard -->
+      <div class="sim-scoreboard">
+        <div class="sim-section-label" style="text-align:center">Count</div>
+        <div class="sim-count-display">
+          <div class="sim-count-block">
+            <div class="sim-count-col-label">Balls</div>
+            <div class="sim-count-num" id="sim-balls-num">0</div>
+            <div class="sim-dots" id="sim-ball-dots"></div>
+          </div>
+          <div class="sim-dash">–</div>
+          <div class="sim-count-block">
+            <div class="sim-count-col-label">Strikes</div>
+            <div class="sim-count-num" id="sim-strikes-num">0</div>
+            <div class="sim-dots" id="sim-strike-dots"></div>
+          </div>
+        </div>
+        <div class="sim-actions">
+          <button class="sim-btn sim-btn-ball"   id="sim-add-ball">+ Ball</button>
+          <button class="sim-btn sim-btn-strike" id="sim-add-strike">+ Strike</button>
+          <button class="sim-btn sim-btn-reset"  id="sim-reset">&#8635; Reset</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right column: outcome table -->
+    <div class="sim-outcomes-panel" id="sim-outcomes-panel">
+      <div class="sim-empty">Loading…</div>
+    </div>
+
+  </div>
+</div>
+
 <script>
 const OUTCOMES = ["single","double","triple","home_run","walk","strikeout","groundout","flyout","other"];
 const LABELS   = ["Single","Double","Triple","Home Run","Walk","Strikeout","Ground Out","Fly Out","Other"];
@@ -461,10 +967,13 @@ const COUNT_ORDER = [
 let rawData = [];
 let state = { stand: "R", p_throws: "R", balls: null, strikes: null };
 let hypState = { balls: null, strikes: null };
+let simState = { stand: "R", p_throws: "R", balls: 0, strikes: 0 };
 let detailChart = null;
 let hypChart = null;
 let alluvialRendered = false;
-let alluvialFilter = null; // { id, isCount } or null
+let alluvialFilter = null;
+let countPathsRendered = false;
+let simInitialized = false;
 
 // ===================== Data helpers =====================
 
@@ -506,9 +1015,19 @@ function fmt(v)  { return (v * 100).toFixed(1) + "%"; }
 function fmtN(n) { return n >= 1000 ? (n/1000).toFixed(1)+"k" : n; }
 function fmtDelta(d) { return (d >= 0 ? "+" : "") + (d * 100).toFixed(1) + " pts"; }
 
+function getChartColors() {
+  const cs = getComputedStyle(document.body);
+  const isLight = document.body.classList.contains('light');
+  return {
+    muted: cs.getPropertyValue('--muted').trim() || '#8892b0',
+    text:  cs.getPropertyValue('--text').trim()  || '#e2e8f0',
+    grid:  isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)',
+  };
+}
+
 // ===================== Tab switching =====================
 
-const TABS = ["home","explorer","hypothesis","alluvial"];
+const TABS = ["home","explorer","hypothesis","alluvial","count-paths","simulator"];
 
 function switchTab(id) {
   TABS.forEach(t => {
@@ -519,6 +1038,13 @@ function switchTab(id) {
   if (id === "alluvial" && rawData.length && !alluvialRendered) {
     renderAlluvial();
     alluvialRendered = true;
+  }
+  if (id === "count-paths" && rawData.length && !countPathsRendered) {
+    renderCountPaths();
+    countPathsRendered = true;
+  }
+  if (id === "simulator") {
+    if (simInitialized) renderSimulator();
   }
 }
 
@@ -562,6 +1088,7 @@ function renderDetail() {
   const panel = document.getElementById("detail-panel");
   const rec = lookup(state.stand, state.p_throws, state.balls, state.strikes);
   if (!rec) { panel.innerHTML = `<div class="placeholder">No data</div>`; return; }
+  const cc = getChartColors();
 
   panel.innerHTML = `
     <div><div class="detail-header">
@@ -603,9 +1130,9 @@ function renderDetail() {
           return ` ${ctx.formattedValue}%   (${item.n.toLocaleString()} PA)`;
         }}}},
       scales: {
-        x: { grid: { color: "rgba(255,255,255,0.05)" }, ticks: { color: "#8892b0", callback: v => v+"%" },
+        x: { grid: { color: cc.grid }, ticks: { color: cc.muted, callback: v => v+"%" },
              border: { color: "transparent" }, max: Math.max(...sorted.map(x => x.p*100))*1.15 },
-        y: { grid: { display: false }, ticks: { color: "#c4cde0", font: { size: 12 } }, border: { color: "transparent" } }
+        y: { grid: { display: false }, ticks: { color: cc.text, font: { size: 12 } }, border: { color: "transparent" } }
       }
     }
   });
@@ -664,6 +1191,7 @@ function buildHypothesisGrid() {
 function renderHypothesisDetail() {
   const panel = document.getElementById("hyp-detail-panel");
   const { opposite, same, delta } = computeHypothesis(hypState.balls, hypState.strikes);
+  const cc = getChartColors();
   const deltaColor = delta > 0.001 ? "var(--green)" : delta < -0.001 ? "var(--red)" : "var(--muted)";
   const deltaLabel = delta > 0.001
     ? `+${(delta*100).toFixed(1)} pt OBP advantage for opposite`
@@ -704,8 +1232,8 @@ function renderHypothesisDetail() {
       plugins: { legend: { display: false },
         tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.formattedValue}%` }}},
       scales: {
-        x: { grid: { color: "rgba(255,255,255,0.05)" }, ticks: { color: "#8892b0", callback: v => v+"%" }, border: { color: "transparent" } },
-        y: { grid: { display: false }, ticks: { color: "#c4cde0", font: { size: 12 } }, border: { color: "transparent" } }
+        x: { grid: { color: cc.grid }, ticks: { color: cc.muted, callback: v => v+"%" }, border: { color: "transparent" } },
+        y: { grid: { display: false }, ticks: { color: cc.text, font: { size: 12 } }, border: { color: "transparent" } }
       }
     }
   });
@@ -714,9 +1242,8 @@ function renderHypothesisDetail() {
 // ===================== TAB: Count Flow (Alluvial) =====================
 
 function buildAlluvialData() {
-  // Aggregate raw counts across all 4 handedness combos
-  const linkTotals = {}; // "count|outcome" -> sum of raw PAs
-  const countTotals = {}; // "count" -> total PAs
+  const linkTotals = {};
+  const countTotals = {};
 
   COUNT_ORDER.forEach(({b, s}) => {
     const key = `${b}-${s}`;
@@ -775,7 +1302,6 @@ function renderAlluvial() {
     .style("display", "block")
     .style("overflow", "visible");
 
-  // ---- Filter data ----
   let { nodes, links } = buildAlluvialData();
   if (alluvialFilter) {
     if (alluvialFilter.isCount) {
@@ -791,7 +1317,6 @@ function renderAlluvial() {
     }
   }
 
-  // ---- Filter status label ----
   if (alluvialFilter) {
     const activeNode = nodes.find(n => n.id === alluvialFilter.id);
     const label = activeNode ? activeNode.label : alluvialFilter.id;
@@ -805,7 +1330,6 @@ function renderAlluvial() {
       .text(`Filtered: ${label} — click again to reset`);
   }
 
-  // ---- Sankey layout ----
   const sankey = d3.sankey()
     .nodeId(d => d.id)
     .nodeAlign(d3.sankeyLeft)
@@ -822,7 +1346,6 @@ function renderAlluvial() {
   nodes.forEach(n => { colorById[n.id] = n.color; });
   graph.nodes.forEach(n => { n.color = colorById[n.id]; });
 
-  // ---- Links ----
   const linkSel = svg.append("g")
     .attr("fill", "none")
     .selectAll("path")
@@ -834,7 +1357,6 @@ function renderAlluvial() {
       .attr("stroke-opacity", 0.3)
       .style("cursor", "default");
 
-  // ---- Nodes ----
   const nodeSel = svg.append("g")
     .selectAll("rect")
     .data(graph.nodes)
@@ -848,7 +1370,10 @@ function renderAlluvial() {
       .attr("opacity", d => (alluvialFilter && d.id === alluvialFilter.id) ? 1 : 0.85)
       .style("cursor", "pointer");
 
-  // ---- Labels ----
+  const isLight = document.body.classList.contains('light');
+  const labelColor = isLight ? '#1a1d2e' : '#c4cde0';
+  const labelActiveColor = isLight ? '#000' : '#fff';
+
   svg.append("g")
     .selectAll("text")
     .data(graph.nodes)
@@ -857,13 +1382,12 @@ function renderAlluvial() {
       .attr("y", d => (d.y0 + d.y1) / 2)
       .attr("dy", "0.35em")
       .attr("text-anchor", d => d.isCount ? "end" : "start")
-      .attr("fill", d => (alluvialFilter && d.id === alluvialFilter.id) ? "#fff" : "#c4cde0")
+      .attr("fill", d => (alluvialFilter && d.id === alluvialFilter.id) ? labelActiveColor : labelColor)
       .attr("font-weight", d => (alluvialFilter && d.id === alluvialFilter.id) ? 700 : 400)
       .attr("font-size", 11)
       .attr("font-family", "Inter, system-ui, sans-serif")
       .text(d => d.label);
 
-  // ---- Click: nodes (toggle filter) ----
   nodeSel.on("click", (event, d) => {
     alluvialFilter = (alluvialFilter && alluvialFilter.id === d.id)
       ? null
@@ -871,7 +1395,6 @@ function renderAlluvial() {
     renderAlluvial();
   });
 
-  // ---- Hover: nodes ----
   nodeSel
     .on("mouseover", (event, d) => {
       linkSel.attr("stroke-opacity", l =>
@@ -882,13 +1405,13 @@ function renderAlluvial() {
       linkSel.attr("stroke-opacity", 0.3);
     });
 
-  // ---- Hover: links ----
   linkSel
     .on("mouseover", (event, d) => {
       d3.select(event.currentTarget).attr("stroke-opacity", 0.75);
-      const pct = d.source.value > 0 ? (d.value / d.source.value * 100).toFixed(1) : "—";
+      const pctOfCount   = d.source.value > 0 ? (d.value / d.source.value * 100).toFixed(1) : "—";
+      const pctOfOutcome = d.target.value  > 0 ? (d.value / d.target.value  * 100).toFixed(1) : "—";
       tooltip.style.display = "block";
-      tooltip.innerHTML = `<strong>${d.source.label}</strong> count<br>${d.target.label}: ${d.value.toLocaleString()} PA<br><span style="color:var(--muted)">${pct}% of count total</span>`;
+      tooltip.innerHTML = `<strong>${d.source.label}</strong> count<br>${d.target.label}: ${d.value.toLocaleString()} PA<br><span style="color:var(--muted)">${pctOfCount}% of count total &nbsp;·&nbsp; ${pctOfOutcome}% of ${d.target.label.toLowerCase()} total</span>`;
     })
     .on("mousemove", event => {
       const rect = container.getBoundingClientRect();
@@ -901,6 +1424,370 @@ function renderAlluvial() {
     });
 }
 
+// ===================== TAB: Simulator =====================
+
+function outcomeCategory(o) {
+  if (['single','double','triple','home_run'].includes(o)) return 'cat-hit';
+  if (o === 'walk') return 'cat-walk';
+  return 'cat-out';
+}
+
+function bumpEl(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove("bump");
+  void el.offsetWidth; // force reflow to restart animation
+  el.classList.add("bump");
+  setTimeout(() => el.classList.remove("bump"), 280);
+}
+
+function updateSimDots() {
+  const ballDots   = document.getElementById("sim-ball-dots");
+  const strikeDots = document.getElementById("sim-strike-dots");
+  if (!ballDots || !strikeDots) return;
+  ballDots.innerHTML   = [0,1,2,3].map(i =>
+    `<div class="sim-dot${i < simState.balls   ? ' ball-on'   : ''}"></div>`).join('');
+  strikeDots.innerHTML = [0,1,2].map(i =>
+    `<div class="sim-dot${i < simState.strikes ? ' strike-on' : ''}"></div>`).join('');
+}
+
+function renderSimulator() {
+  document.getElementById("sim-balls-num").textContent   = simState.balls;
+  document.getElementById("sim-strikes-num").textContent = simState.strikes;
+  updateSimDots();
+
+  document.getElementById("sim-add-ball").disabled   = simState.balls   >= 3;
+  document.getElementById("sim-add-strike").disabled = simState.strikes >= 2;
+
+  const rec   = lookup(simState.stand, simState.p_throws, simState.balls, simState.strikes);
+  const panel = document.getElementById("sim-outcomes-panel");
+
+  if (!rec) {
+    panel.innerHTML = `<div class="sim-empty">No data for this selection.</div>`;
+    return;
+  }
+
+  const sorted = OUTCOMES
+    .map((o, i) => ({ o, i, p: rec.props[o] || 0, n: rec.raw[o] || 0 }))
+    .sort((a, b) => b.p - a.p);
+
+  const maxP = sorted[0].p;
+  const matchup = `${simState.stand === "R" ? "RHB" : "LHB"} vs ${simState.p_throws === "R" ? "RHP" : "LHP"}`;
+
+  panel.innerHTML = `
+    <div class="sim-outcomes-header">
+      <span class="sim-outcomes-heading">Probable Outcome</span>
+      <span class="sim-outcomes-meta">${matchup} &nbsp;·&nbsp; ${rec.total.toLocaleString()} PA</span>
+    </div>
+    <div class="sim-outcome-rows">
+      ${sorted.map((item, rank) => {
+        const isTop = rank === 0;
+        const cat   = isTop ? outcomeCategory(item.o) : '';
+        const color = COLORS[item.i];
+        const barW  = maxP > 0 ? (item.p / maxP * 100).toFixed(1) : 0;
+        return `<div class="sim-row${isTop ? ' top ' + cat : ''}">
+          <div class="sim-row-bg" style="background:${color}"></div>
+          <div class="sim-row-rank">${isTop ? '&#9733;' : rank + 1}</div>
+          <div class="sim-row-swatch" style="background:${color}"></div>
+          <div class="sim-row-name">${LABELS[item.i]}</div>
+          <div class="sim-bar-track">
+            <div class="sim-bar-fill" style="background:${color};width:${barW}%"></div>
+          </div>
+          <div class="sim-row-pct">${fmt(item.p)}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function initSimulator() {
+  ["R","L"].forEach(hand => {
+    document.getElementById("sim-stand-" + hand).addEventListener("click", () => {
+      simState.stand = hand;
+      document.getElementById("sim-stand-R").classList.toggle("active", hand === "R");
+      document.getElementById("sim-stand-L").classList.toggle("active", hand === "L");
+      renderSimulator();
+    });
+    document.getElementById("sim-throws-" + hand).addEventListener("click", () => {
+      simState.p_throws = hand;
+      document.getElementById("sim-throws-R").classList.toggle("active", hand === "R");
+      document.getElementById("sim-throws-L").classList.toggle("active", hand === "L");
+      renderSimulator();
+    });
+  });
+
+  document.getElementById("sim-add-ball").addEventListener("click", () => {
+    if (simState.balls >= 3) return;
+    simState.balls++;
+    bumpEl("sim-balls-num");
+    renderSimulator();
+  });
+
+  document.getElementById("sim-add-strike").addEventListener("click", () => {
+    if (simState.strikes >= 2) return;
+    simState.strikes++;
+    bumpEl("sim-strikes-num");
+    renderSimulator();
+  });
+
+  document.getElementById("sim-reset").addEventListener("click", () => {
+    simState.balls = 0;
+    simState.strikes = 0;
+    renderSimulator();
+  });
+
+  simInitialized = true;
+  renderSimulator();
+}
+
+// ===================== TAB: Count Paths =====================
+
+function countPathNodeColor(b, s) {
+  const diff = b - s;
+  if (diff >= 3) return '#1e3a8a';
+  if (diff === 2) return '#2563eb';
+  if (diff === 1) return '#60a5fa';
+  if (diff === 0) return '#6b7280';
+  if (diff === -1) return '#f87171';
+  return '#dc2626';
+}
+
+function buildCountPathsData() {
+  // Pool all handedness combos into a single n(b,s) = PAs ending at that count
+  const n = {};
+  COUNT_ORDER.forEach(({b, s}) => {
+    let total = 0;
+    ["R","L"].forEach(stand => ["R","L"].forEach(pt => {
+      const rec = lookup(stand, pt, b, s);
+      if (rec) total += rec.total;
+    }));
+    n[`${b}-${s}`] = total;
+  });
+
+  const totalPAs = COUNT_ORDER.reduce((sum, {b, s}) => sum + n[`${b}-${s}`], 0);
+
+  // vDown(b,s) = sum of n(b',s') for b'>=b AND s'>=s
+  // Used as a data-driven proxy for the "pull" of each downstream count
+  // when estimating ball vs. strike split at inner counts.
+  const vDown = {};
+  COUNT_ORDER.forEach(({b, s}) => {
+    vDown[`${b}-${s}`] = COUNT_ORDER
+      .filter(({b: b2, s: s2}) => b2 >= b && s2 >= s)
+      .reduce((sum, {b: b2, s: s2}) => sum + n[`${b2}-${s2}`], 0);
+  });
+
+  // Forward propagation in topological order (increasing b+s)
+  const visits = {};
+  COUNT_ORDER.forEach(({b, s}) => visits[`${b}-${s}`] = 0);
+  visits["0-0"] = totalPAs;
+
+  const edges = [];
+  const ordered = [...COUNT_ORDER].sort((a, b) => (a.b + a.s) - (b.b + b.s));
+
+  ordered.forEach(({b, s}) => {
+    const key = `${b}-${s}`;
+    const cont = Math.max(0, visits[key] - n[key]);
+    if (cont <= 0) return;
+
+    if (b < 3 && s < 2) {
+      // Both ball and strike can continue — split proportionally using vDown
+      const pb = vDown[`${b+1}-${s}`] || 0;
+      const ps = vDown[`${b}-${s+1}`] || 0;
+      const tot = pb + ps || 1;
+      const tBall   = cont * pb / tot;
+      const tStrike = cont * ps / tot;
+      edges.push({ source: key, target: `${b+1}-${s}`, value: tBall,   isBall: true  });
+      edges.push({ source: key, target: `${b}-${s+1}`, value: tStrike, isBall: false });
+      visits[`${b+1}-${s}`] += tBall;
+      visits[`${b}-${s+1}`] += tStrike;
+    } else if (b < 3) {
+      // s == 2: only balls continue (strikes = strikeout, terminal)
+      edges.push({ source: key, target: `${b+1}-${s}`, value: cont, isBall: true });
+      visits[`${b+1}-${s}`] += cont;
+    } else if (s < 2) {
+      // b == 3: only strikes continue (balls = walk, terminal)
+      edges.push({ source: key, target: `${b}-${s+1}`, value: cont, isBall: false });
+      visits[`${b}-${s+1}`] += cont;
+    }
+    // (3,2): fully terminal, no outgoing edges
+  });
+
+  const nodes = COUNT_ORDER.map(({b, s}) => ({
+    id: `${b}-${s}`, label: `${b}-${s}`,
+    b, s,
+    visits: visits[`${b}-${s}`],
+    n: n[`${b}-${s}`],
+    color: countPathNodeColor(b, s),
+  }));
+
+  return { nodes, edges, totalPAs };
+}
+
+function renderCountPaths() {
+  const container = document.getElementById("count-paths-wrap");
+  d3.select(container).selectAll("svg").remove();
+
+  const tooltip = document.getElementById("count-paths-tooltip");
+  tooltip.style.display = "none";
+
+  const { nodes, edges, totalPAs } = buildCountPathsData();
+
+  const W  = container.clientWidth - 32;
+  const H  = 520;
+  const ml = 48, mr = 54, mt = 30, mb = 12;
+
+  const svg = d3.select(container)
+    .append("svg")
+    .attr("viewBox", `0 0 ${W} ${H}`)
+    .attr("width", "100%")
+    .style("display", "block")
+    .style("overflow", "visible");
+
+  const sankey = d3.sankey()
+    .nodeId(d => d.id)
+    .nodeAlign(d3.sankeyLeft)   // places each count in column = b+s (its depth)
+    .nodeWidth(14)
+    .nodePadding(14)
+    .extent([[ml, mt], [W - mr, H - mb]]);
+
+  const graph = sankey({
+    nodes: nodes.map(d => ({ ...d })),
+    links: edges.map(d => ({ source: d.source, target: d.target, value: Math.max(1, d.value), isBall: d.isBall })),
+  });
+
+  // Restore per-node color after sankey clones objects
+  const colorById = {};
+  nodes.forEach(n => colorById[n.id] = n.color);
+  graph.nodes.forEach(n => { n.color = colorById[n.id]; });
+
+  // Depth column labels at top
+  const colXMap = {};
+  graph.nodes.forEach(n => {
+    const depth = n.b + n.s;
+    if (colXMap[depth] === undefined) colXMap[depth] = (n.x0 + n.x1) / 2;
+  });
+  const isLight = document.body.classList.contains("light");
+  const labelColor      = isLight ? "#1a1d2e" : "#c4cde0";
+  const mutedLabelColor = isLight ? "#5a6480" : "#8892b0";
+
+  svg.append("g")
+    .selectAll("text.depth-label")
+    .data(Object.entries(colXMap))
+    .join("text")
+      .attr("x", ([, x]) => x)
+      .attr("y", mt - 10)
+      .attr("text-anchor", "middle")
+      .attr("fill", mutedLabelColor)
+      .attr("font-size", 9)
+      .attr("font-weight", 600)
+      .attr("letter-spacing", "0.08em")
+      .attr("font-family", "Inter, system-ui, sans-serif")
+      .attr("text-transform", "uppercase")
+      .text(([depth]) => depth === "0" ? "START" : `P${depth}`);
+
+  // Links
+  const linkSel = svg.append("g")
+    .attr("fill", "none")
+    .selectAll("path")
+    .data(graph.links)
+    .join("path")
+      .attr("d", d3.sankeyLinkHorizontal())
+      .attr("stroke", d => d.isBall ? "#34d399" : "#f87171")
+      .attr("stroke-width", d => Math.max(1, d.width))
+      .attr("stroke-opacity", 0.28)
+      .style("cursor", "default");
+
+  // Nodes
+  const nodeSel = svg.append("g")
+    .selectAll("rect")
+    .data(graph.nodes)
+    .join("rect")
+      .attr("x", d => d.x0)
+      .attr("y", d => d.y0)
+      .attr("width",  d => d.x1 - d.x0)
+      .attr("height", d => Math.max(2, d.y1 - d.y0))
+      .attr("fill",   d => d.color)
+      .attr("rx", 3)
+      .attr("opacity", 0.9)
+      .style("cursor", "default");
+
+  // Node labels
+  svg.append("g")
+    .selectAll("text.node-label")
+    .data(graph.nodes)
+    .join("text")
+      .attr("x", d => d.x1 + 5)
+      .attr("y", d => (d.y0 + d.y1) / 2)
+      .attr("dy", "0.35em")
+      .attr("fill", labelColor)
+      .attr("font-size", 11)
+      .attr("font-family", "Inter, system-ui, sans-serif")
+      .text(d => d.id);
+
+  // Node hover
+  nodeSel
+    .on("mouseover", (event, d) => {
+      linkSel.attr("stroke-opacity", l =>
+        (l.source.id === d.id || l.target.id === d.id) ? 0.7 : 0.05
+      );
+      const pctAll     = (d.visits / totalPAs * 100).toFixed(1);
+      const pctEndHere = d.visits > 0 ? (d.n / d.visits * 100).toFixed(1) : "—";
+      tooltip.style.display = "block";
+      tooltip.innerHTML =
+        `<strong>${d.id}</strong><br>` +
+        `~${Math.round(d.visits).toLocaleString()} PA visits<br>` +
+        `${pctAll}% of all PAs reach this count<br>` +
+        `<span style="color:var(--muted)">${pctEndHere}% of visits end here</span>`;
+    })
+    .on("mousemove", event => {
+      const rect = container.getBoundingClientRect();
+      tooltip.style.left = (event.clientX - rect.left + 14) + "px";
+      tooltip.style.top  = (event.clientY - rect.top  - 10) + "px";
+    })
+    .on("mouseout", () => {
+      linkSel.attr("stroke-opacity", 0.28);
+      tooltip.style.display = "none";
+    });
+
+  // Link hover
+  linkSel
+    .on("mouseover", (event, d) => {
+      d3.select(event.currentTarget).attr("stroke-opacity", 0.75);
+      const pctOfSrc = d.source.value > 0 ? (d.value / d.source.value * 100).toFixed(1) : "—";
+      const pctOfAll = (d.value / totalPAs * 100).toFixed(1);
+      const type = d.isBall ? "Ball" : "Strike";
+      tooltip.style.display = "block";
+      tooltip.innerHTML =
+        `<strong>${d.source.id} &rarr; ${d.target.id}</strong><br>` +
+        `${type} &nbsp;·&nbsp; ~${Math.round(d.value).toLocaleString()} PAs<br>` +
+        `${pctOfSrc}% of ${d.source.id} flow<br>` +
+        `<span style="color:var(--muted)">${pctOfAll}% of all PAs</span>`;
+    })
+    .on("mousemove", event => {
+      const rect = container.getBoundingClientRect();
+      tooltip.style.left = (event.clientX - rect.left + 14) + "px";
+      tooltip.style.top  = (event.clientY - rect.top  - 10) + "px";
+    })
+    .on("mouseout", event => {
+      d3.select(event.currentTarget).attr("stroke-opacity", 0.28);
+      tooltip.style.display = "none";
+    });
+}
+
+// ===================== Theme toggle =====================
+
+document.getElementById("theme-toggle").addEventListener("click", () => {
+  const isLight = document.body.classList.toggle("light");
+  document.getElementById("theme-toggle").textContent = isLight ? "\u263D Dark" : "\u2600 Light";
+  // Refresh active charts with correct axis colors
+  if (state.balls !== null) renderDetail();
+  if (hypState.balls !== null) renderHypothesisDetail();
+  // Alluvial/count-paths labels are theme-aware; re-render on next visit
+  alluvialRendered = false;
+  countPathsRendered = false;
+  // Refresh simulator
+  if (simInitialized) renderSimulator();
+});
+
 // ===================== Boot =====================
 
 fetch("data.json")
@@ -908,6 +1795,7 @@ fetch("data.json")
   .then(data => {
     rawData = data;
     buildGrid();
+    initSimulator();
   });
 </script>
 </body>
