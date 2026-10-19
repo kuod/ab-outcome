@@ -5,14 +5,10 @@ Each row in Statcast is a pitch; we keep only rows where `events` is non-null
 """
 
 import json
+from pathlib import Path
 import pandas as pd
-from pybaseball import statcast
 import warnings
 warnings.filterwarnings("ignore")
-
-# Enable caching to avoid re-downloading
-from pybaseball import cache
-cache.enable()
 
 SEASONS = [
     ("2022-04-07", "2022-10-05"),
@@ -57,6 +53,9 @@ BB_TYPE_FLYOUT    = {"fly_ball", "line_drive", "popup"}
 OUTCOME_ORDER = ["single", "double", "triple", "home_run", "walk", "strikeout", "groundout", "flyout", "other"]
 
 def fetch_all():
+    # Imported lazily so process() can be imported/tested without pybaseball.
+    from pybaseball import statcast, cache
+    cache.enable()  # avoid re-downloading
     frames = []
     for start, end in SEASONS:
         print(f"Fetching {start} → {end} …")
@@ -117,10 +116,8 @@ def process(df):
 if __name__ == "__main__":
     df = fetch_all()
     records = process(df)
-    out_path = "/Users/david/git/ab-outcome/docs/data.json"
+    out_path = Path(__file__).resolve().parent / "docs" / "data.json"
     with open(out_path, "w") as f:
         json.dump(records, f)
     print(f"\nWrote {len(records)} records to {out_path}")
-    # Quick sanity check
-    total_pa = sum(r["total"] for r in records) // 4  # each PA counted in multiple groups? no — groups are disjoint
     print(f"Total plate appearances in dataset: {sum(r['total'] for r in records):,}")

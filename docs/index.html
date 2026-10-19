@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Batting Outcome Explorer</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
 <style>
   :root {
@@ -1791,11 +1791,22 @@ document.getElementById("theme-toggle").addEventListener("click", () => {
 // ===================== Boot =====================
 
 fetch("data.json")
-  .then(r => r.json())
+  .then(r => {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  })
   .then(data => {
     rawData = data;
     buildGrid();
     initSimulator();
+  })
+  .catch(err => {
+    console.error("Failed to load data.json", err);
+    const msg = document.createElement("div");
+    msg.setAttribute("role", "alert");
+    msg.style.cssText = "margin:16px;padding:12px;border:1px solid #f87171;border-radius:8px;color:#f87171";
+    msg.textContent = "Could not load data.json (" + err.message + "). Serve this folder over http, e.g. `python3 -m http.server`, rather than opening the file directly.";
+    document.body.prepend(msg);
   });
 </script>
 </body>
