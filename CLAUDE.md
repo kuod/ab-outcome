@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 python3 fetch_data.py
 ```
-Output goes to `docs/data.json`. Pybaseball caches downloads in `~/.pybaseball/cache/`.
+Output goes to `docs/data.json` (path is relative to the script). Pybaseball caches downloads in `~/.pybaseball/cache/`.
 
 **Run local dev server:**
 ```bash
@@ -27,6 +27,7 @@ Two-file pipeline: a Python build script produces a static JSON file consumed by
 ### `fetch_data.py` (data build step)
 - Downloads 3 seasons of MLB Statcast pitch-level data (2022–2024) via `pybaseball.statcast()`
 - Filters to final pitch of each plate appearance (`events` column non-null)
+- Note: `walk` also includes `hit_by_pitch` and `intent_walk`; `double_play` maps to `flyout` and `triple_play` to `groundout`; sac bunts/errors/catcher interference are `other`
 - Maps Statcast event names → 9 simplified outcomes: `single`, `double`, `triple`, `home_run`, `walk`, `strikeout`, `groundout`, `flyout`, `other`
 - Special case: `field_out` (the most common out event) requires `bb_type` column to disambiguate groundout vs flyout
 - Groups by `stand` (batter hand L/R) × `p_throws` (pitcher hand L/R) × `balls` × `strikes` → 48 records
@@ -35,7 +36,7 @@ Two-file pipeline: a Python build script produces a static JSON file consumed by
 ### `docs/index.html` (the entire front-end)
 Single HTML file with inline CSS and JS, no build step. Loads `data.json` at runtime via `fetch()`.
 
-**Two tabs:**
+**Six tabs** (home, explorer, hypothesis, alluvial/Count Flow, count-paths, simulator). The two core ones:
 1. **Outcomes Explorer** — filter by batter/pitcher hand, 4×3 grid of count cards, click for detail bar chart
 2. **Platoon Advantage** — compares opposite-handedness matchups (RHB vs LHP + LHB vs RHP pooled) against same-handedness, OBP as the primary metric, delta shown per count
 
@@ -47,6 +48,8 @@ Key JS functions:
 - `renderDetail()` / `renderHypothesisDetail()` — render Chart.js horizontal bar charts in the right panel
 
 Charts use Chart.js 4.4 (CDN). Color scheme: hits = shades of blue, outs = shades of red, walk = green.
+
+**Tests:** `python3 -m unittest discover -s tests` (no network or pybaseball needed).
 
 ### `docs/` (GitHub Pages root)
 Configured to serve from `/docs` on the `main` branch. `.nojekyll` disables Jekyll processing.
