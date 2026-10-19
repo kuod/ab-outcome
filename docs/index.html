@@ -1791,11 +1791,22 @@ document.getElementById("theme-toggle").addEventListener("click", () => {
 // ===================== Boot =====================
 
 fetch("data.json")
-  .then(r => r.json())
+  .then(r => {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  })
   .then(data => {
     rawData = data;
     buildGrid();
     initSimulator();
+  })
+  .catch(err => {
+    console.error("Failed to load data.json", err);
+    const msg = document.createElement("div");
+    msg.setAttribute("role", "alert");
+    msg.style.cssText = "margin:16px;padding:12px;border:1px solid #f87171;border-radius:8px;color:#f87171";
+    msg.textContent = "Could not load data.json (" + err.message + "). Serve this folder over http, e.g. `python3 -m http.server`, rather than opening the file directly.";
+    document.body.prepend(msg);
   });
 </script>
 </body>
