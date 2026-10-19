@@ -39,7 +39,7 @@ The pattern points to **pitcher behavior under pressure**, not just batter skill
 The pre-aggregated data lives in `docs/data.json` (48 records: 4 handedness combos × 12 counts). To regenerate it with updated seasons, edit `SEASONS` in `fetch_data.py` and run:
 
 ```bash
-pip install pybaseball
+pip install -r requirements.txt
 python3 fetch_data.py
 ```
 

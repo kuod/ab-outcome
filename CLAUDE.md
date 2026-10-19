@@ -17,7 +17,7 @@ cd docs && python3 -m http.server 8742
 
 **Install dependency:**
 ```bash
-pip install pybaseball
+pip install -r requirements.txt
 ```
 
 ## Architecture
