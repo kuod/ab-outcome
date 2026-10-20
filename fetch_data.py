@@ -23,7 +23,7 @@ OUTCOME_MAP = {
     "home_run": "home_run",
     "walk": "walk",
     "intent_walk": "walk",
-    "hit_by_pitch": "walk",            # batter reaches, treat like walk
+    "hit_by_pitch": "hbp",             # own bucket (intent_walk stays merged into walk)
     "strikeout": "strikeout",
     "strikeout_double_play": "strikeout",
     "grounded_into_double_play": "groundout",
@@ -51,7 +51,7 @@ BB_TYPE_GROUNDOUT = {"ground_ball"}
 BB_TYPE_FLYOUT    = {"fly_ball", "line_drive", "popup"}
 BB_TYPE_EVENTS    = {"field_out", "double_play", "triple_play"}
 
-OUTCOME_ORDER = ["single", "double", "triple", "home_run", "walk", "strikeout", "groundout", "flyout", "other"]
+OUTCOME_ORDER = ["single", "double", "triple", "home_run", "walk", "hbp", "strikeout", "groundout", "flyout", "other"]
 
 def fetch_all():
     # Imported lazily so process() can be imported/tested without pybaseball.

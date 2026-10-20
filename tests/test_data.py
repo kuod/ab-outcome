@@ -52,9 +52,10 @@ class ProcessTests(unittest.TestCase):
         ])
         self.assertEqual(sum(r["total"] for r in recs), 1)
 
-    def test_hbp_and_intent_walk_count_as_walk(self):
-        recs = self.run_process([_pa("hit_by_pitch"), _pa("intent_walk")])
-        self.assertEqual(recs[0]["raw"]["walk"], 2)
+    def test_hbp_has_own_bucket_and_intent_walk_counts_as_walk(self):
+        recs = self.run_process([_pa("hit_by_pitch"), _pa("intent_walk"), _pa("walk")])
+        raw = recs[0]["raw"]
+        self.assertEqual((raw["hbp"], raw["walk"]), (1, 2))
 
     def test_props_sum_to_one(self):
         recs = self.run_process([_pa("single"), _pa("strikeout", strikes=2)])

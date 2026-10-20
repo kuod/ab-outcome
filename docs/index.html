@@ -23,6 +23,7 @@
     --triple:   #2563eb;
     --homerun:  #1e3a8a;
     --walk:     #34d399;
+    --hbp:      #2dd4bf;
     --strikeout:#fca5a5;
     --groundout:#ef4444;
     --flyout:   #991b1b;
@@ -564,6 +565,7 @@
   /* glow by outcome category */
   .sim-row.top.cat-hit   { border-color: #60a5fa; box-shadow: 0 0 28px rgba(96,165,250,0.13); }
   .sim-row.top.cat-walk  { border-color: var(--green); box-shadow: 0 0 28px rgba(52,211,153,0.15); }
+  .sim-row.top.cat-hbp   { border-color: #2dd4bf; box-shadow: 0 0 28px rgba(45,212,191,0.15); }
   .sim-row.top.cat-out   { border-color: var(--red); box-shadow: 0 0 28px rgba(248,113,113,0.13); }
 
   @keyframes topPulse {
@@ -587,6 +589,7 @@
   .sim-row.top .sim-row-rank { font-size: 1rem; }
   .sim-row.top.cat-hit  .sim-row-rank { color: #60a5fa; }
   .sim-row.top.cat-walk .sim-row-rank { color: var(--green); }
+  .sim-row.top.cat-hbp  .sim-row-rank { color: #2dd4bf; }
   .sim-row.top.cat-out  .sim-row-rank { color: var(--red); }
 
   .sim-row-swatch {
@@ -942,21 +945,22 @@
 </div>
 
 <script>
-const OUTCOMES = ["single","double","triple","home_run","walk","strikeout","groundout","flyout","other"];
-const LABELS   = ["Single","Double","Triple","Home Run","Walk","Strikeout","Ground Out","Fly Out","Other"];
+const OUTCOMES = ["single","double","triple","home_run","walk","hbp","strikeout","groundout","flyout","other"];
+const LABELS   = ["Single","Double","Triple","Home Run","Walk","Hit By Pitch","Strikeout","Ground Out","Fly Out","Other"];
 const COLORS   = [
   getComputedStyle(document.documentElement).getPropertyValue('--single').trim(),
   getComputedStyle(document.documentElement).getPropertyValue('--double').trim(),
   getComputedStyle(document.documentElement).getPropertyValue('--triple').trim(),
   getComputedStyle(document.documentElement).getPropertyValue('--homerun').trim(),
   getComputedStyle(document.documentElement).getPropertyValue('--walk').trim(),
+  getComputedStyle(document.documentElement).getPropertyValue('--hbp').trim(),
   getComputedStyle(document.documentElement).getPropertyValue('--strikeout').trim(),
   getComputedStyle(document.documentElement).getPropertyValue('--groundout').trim(),
   getComputedStyle(document.documentElement).getPropertyValue('--flyout').trim(),
   getComputedStyle(document.documentElement).getPropertyValue('--other').trim(),
 ];
 
-const OBP_OUTCOMES = ["single","double","triple","home_run","walk"];
+const OBP_OUTCOMES = ["single","double","triple","home_run","walk","hbp"];
 
 const COUNT_ORDER = [
   {b:0,s:0},{b:1,s:0},{b:2,s:0},{b:3,s:0},
@@ -1429,6 +1433,7 @@ function renderAlluvial() {
 function outcomeCategory(o) {
   if (['single','double','triple','home_run'].includes(o)) return 'cat-hit';
   if (o === 'walk') return 'cat-walk';
+  if (o === 'hbp') return 'cat-hbp';
   return 'cat-out';
 }
 
