@@ -29,6 +29,19 @@ class ProcessTests(unittest.TestCase):
         raw = recs[0]["raw"]
         self.assertEqual((raw["groundout"], raw["flyout"], raw["other"]), (1, 2, 1))
 
+    def test_double_and_triple_play_use_bb_type(self):
+        recs = self.run_process([
+            _pa("double_play", bb_type="ground_ball"),
+            _pa("double_play", bb_type="line_drive"),
+            _pa("double_play", bb_type="popup"),
+            _pa("double_play", bb_type=None),
+            _pa("triple_play", bb_type="ground_ball"),
+            _pa("triple_play", bb_type="fly_ball"),
+            _pa("triple_play", bb_type="weird"),
+        ])
+        raw = recs[0]["raw"]
+        self.assertEqual((raw["groundout"], raw["flyout"], raw["other"]), (2, 3, 2))
+
     def test_filters_non_plate_appearances_and_invalid_counts(self):
         recs = self.run_process([
             _pa(None),
