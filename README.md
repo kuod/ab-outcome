@@ -30,7 +30,7 @@ The advantage holds in 10 of 12 counts (1-1 is a dead heat at −0.0 pts and 0-1
 | 3-2: **+1.4 pts** | 0-1: −0.1 pts |
 | 0-2: **+1.2 pts** | 2-1: +0.1 pts, 1-0: +0.2 pts |
 
-The pattern points to **pitcher behavior under pressure**, not just batter skill. The biggest edges appear at the counts where pitchers most need to throw strikes (3-0, 3-2) or most want to expand the zone (0-2, 1-2) — situations where the platoon matchup affects pitch selection and location more than it does in neutral counts. In the middle of at-bats (1-1, 2-1), pitchers have more flexibility and the advantage nearly disappears.
+The pattern points to **pitcher behavior under pressure**, not just batter skill. The biggest edges appear at the counts where pitchers most need to throw strikes (3-0, 3-2) or most want to expand the zone (0-2) — situations where the platoon matchup affects pitch selection and location more than it does in neutral counts. In the middle of at-bats (1-1, 2-1), pitchers have more flexibility and the advantage nearly disappears.
 
 ## Data
 
