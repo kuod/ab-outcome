@@ -23,7 +23,7 @@ OUTCOME_MAP = {
     "home_run": "home_run",
     "walk": "walk",
     "intent_walk": "walk",
-    "hit_by_pitch": "walk",            # batter reaches, treat like walk
+    "hit_by_pitch": "hbp",             # own bucket (intent_walk stays merged into walk)
     "strikeout": "strikeout",
     "strikeout_double_play": "strikeout",
     "grounded_into_double_play": "groundout",
@@ -36,21 +36,22 @@ OUTCOME_MAP = {
     "line_out": "flyout",
     "sac_fly": "flyout",
     "sac_fly_double_play": "flyout",
-    "double_play": "flyout",           # air DPs; ground DPs covered by grounded_into_double_play
-    "triple_play": "groundout",
+    # double_play / triple_play: classified by bb_type below (like field_out)
     "sac_bunt": "other",
     "sac_bunt_double_play": "other",
     "catcher_interf": "other",
     "field_error": "other",
     "other_out": "other",
-    # field_out handled separately via bb_type below
+    # field_out, double_play, triple_play handled separately via bb_type below
 }
 
-# For "field_out" (the most common out event in Statcast), use bb_type to disambiguate
+# For "field_out" (the most common out event in Statcast), "double_play" and
+# "triple_play", use bb_type to disambiguate
 BB_TYPE_GROUNDOUT = {"ground_ball"}
 BB_TYPE_FLYOUT    = {"fly_ball", "line_drive", "popup"}
+BB_TYPE_EVENTS    = {"field_out", "double_play", "triple_play"}
 
-OUTCOME_ORDER = ["single", "double", "triple", "home_run", "walk", "strikeout", "groundout", "flyout", "other"]
+OUTCOME_ORDER = ["single", "double", "triple", "home_run", "walk", "hbp", "strikeout", "groundout", "flyout", "other"]
 
 def fetch_all():
     # Imported lazily so process() can be imported/tested without pybaseball.
@@ -65,6 +66,24 @@ def fetch_all():
     return pd.concat(frames, ignore_index=True)
 
 
+# Events that are not plate appearances in the official OBP denominator
+# (AB + BB + HBP + SF). sac_fly stays in; field_error stays in AB.
+OBP_EXCLUDED_EVENTS = {"sac_bunt", "sac_bunt_double_play", "catcher_interf", "truncated_pa"}
+
+
+def load_cache(cache_dir="~/.pybaseball/cache"):
+    """Build the Statcast frame from pybaseball's local daily cache; no network.
+
+    Reads every `get_statcast_data_from_csv_url*.parquet` file in `cache_dir`
+    (only the columns process() needs) and concatenates them.
+    """
+    cols = ["game_date", "events", "stand", "p_throws", "balls", "strikes", "bb_type"]
+    files = sorted(Path(cache_dir).expanduser().glob("get_statcast_data_from_csv_url*.parquet"))
+    if not files:
+        raise FileNotFoundError(f"no cached Statcast parquet files in {cache_dir}")
+    return pd.concat([pd.read_parquet(f, columns=cols) for f in files], ignore_index=True)
+
+
 def process(df):
     # Keep only final pitches of each PA (events is populated)
     pa = df[df["events"].notna()].copy()
@@ -77,26 +96,30 @@ def process(df):
     # Map to simplified outcome
     pa["outcome"] = pa["events"].map(OUTCOME_MAP)
 
-    # field_out: use bb_type to classify as groundout or flyout
-    is_field_out = pa["events"] == "field_out"
-    pa.loc[is_field_out & pa["bb_type"].isin(BB_TYPE_GROUNDOUT), "outcome"] = "groundout"
-    pa.loc[is_field_out & pa["bb_type"].isin(BB_TYPE_FLYOUT),    "outcome"] = "flyout"
-    pa.loc[is_field_out & ~pa["bb_type"].isin(BB_TYPE_GROUNDOUT | BB_TYPE_FLYOUT), "outcome"] = "other"
+    # field_out / double_play / triple_play: use bb_type to classify as groundout or flyout
+    by_bb_type = pa["events"].isin(BB_TYPE_EVENTS)
+    pa.loc[by_bb_type & pa["bb_type"].isin(BB_TYPE_GROUNDOUT), "outcome"] = "groundout"
+    pa.loc[by_bb_type & pa["bb_type"].isin(BB_TYPE_FLYOUT),    "outcome"] = "flyout"
+    pa.loc[by_bb_type & ~pa["bb_type"].isin(BB_TYPE_GROUNDOUT | BB_TYPE_FLYOUT), "outcome"] = "other"
 
     # Any remaining NaN → other
     pa["outcome"] = pa["outcome"].fillna("other")
 
+    # PAs not in the standard OBP denominator (sac bunts, catcher interference, ...)
+    pa["excluded"] = pa["events"].isin(OBP_EXCLUDED_EVENTS).astype(int)
+
     # Count by group
     grp = (
         pa.groupby(["stand", "p_throws", "balls", "strikes", "outcome"])
-        .size()
-        .reset_index(name="n")
+        .agg(n=("outcome", "size"), excluded=("excluded", "sum"))
+        .reset_index()
     )
 
     # Pivot to wide, compute proportions
     records = []
     for (stand, p_throws, balls, strikes), sub in grp.groupby(["stand", "p_throws", "balls", "strikes"]):
         total = sub["n"].sum()
+        excluded = int(sub["excluded"].sum())
         counts_dict = dict(zip(sub["outcome"], sub["n"]))
         props = {o: round(counts_dict.get(o, 0) / total, 5) for o in OUTCOME_ORDER}
         raw   = {o: int(counts_dict.get(o, 0)) for o in OUTCOME_ORDER}
@@ -106,6 +129,7 @@ def process(df):
             "balls": int(balls),
             "strikes": int(strikes),
             "total": int(total),
+            "excluded": excluded,
             "props": props,
             "raw": raw,
         })
@@ -114,7 +138,13 @@ def process(df):
 
 
 if __name__ == "__main__":
-    df = fetch_all()
+    import sys
+    # `python3 fetch_data.py --from-cache [DIR]` regenerates from the local pybaseball cache.
+    if "--from-cache" in sys.argv:
+        i = sys.argv.index("--from-cache")
+        df = load_cache(*sys.argv[i + 1:i + 2])
+    else:
+        df = fetch_all()
     records = process(df)
     out_path = Path(__file__).resolve().parent / "docs" / "data.json"
     with open(out_path, "w") as f:
