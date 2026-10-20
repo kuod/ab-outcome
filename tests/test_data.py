@@ -57,6 +57,17 @@ class ProcessTests(unittest.TestCase):
         raw = recs[0]["raw"]
         self.assertEqual((raw["hbp"], raw["walk"]), (1, 2))
 
+    def test_excluded_counts_events_outside_obp_denominator(self):
+        recs = self.run_process([
+            _pa("single"), _pa("walk"), _pa("strikeout"),
+            _pa("sac_fly"), _pa("field_error"),
+            _pa("sac_bunt"), _pa("sac_bunt_double_play"),
+            _pa("catcher_interf"), _pa("truncated_pa"),
+        ])
+        r = recs[0]
+        self.assertEqual(r["total"], 9)
+        self.assertEqual(r["excluded"], 4)  # sac_fly and field_error stay in
+
     def test_props_sum_to_one(self):
         recs = self.run_process([_pa("single"), _pa("strikeout", strikes=2)])
         for r in recs:
@@ -79,6 +90,14 @@ class DataJsonTests(unittest.TestCase):
             self.assertEqual(sum(r["raw"].values()), r["total"])
             self.assertAlmostEqual(sum(r["props"].values()), 1, places=3)
             self.assertEqual(list(r["raw"]), fetch_data.OUTCOME_ORDER)
+
+    def test_obp_uses_standard_denominator(self):
+        on_base = ["single", "double", "triple", "home_run", "walk", "hbp"]
+        h = sum(r["raw"][o] for r in self.data for o in on_base)
+        denom = sum(r["total"] - r["excluded"] for r in self.data)
+        self.assertEqual(sum(r["total"] for r in self.data), 555995)
+        self.assertEqual(sum(r["excluded"] for r in self.data), 2458)
+        self.assertAlmostEqual(h / denom, 0.3147, places=4)
 
 
 if __name__ == "__main__":

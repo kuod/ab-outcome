@@ -810,7 +810,7 @@
     <strong style="color:var(--text)">Hypothesis:</strong> batters have a meaningful OBP advantage when facing a pitcher of the opposite hand — the classic platoon split.<br>
     Comparing <strong style="color:var(--green)">opposite-handedness</strong> matchups (RHB vs LHP &amp; LHB vs RHP)
     against <strong style="color:var(--muted)">same-handedness</strong> (RHB vs RHP &amp; LHB vs LHP)
-    using OBP (hits + walks) across 555,995 plate appearances, 2022–2024.
+    using standard OBP, (H + BB + HBP) / (AB + BB + HBP + SF) — sacrifice bunts, catcher interference and truncated PAs are excluded from the denominator — across 555,995 plate appearances, 2022–2024.
   </p>
   <div class="layout">
     <div>
@@ -989,20 +989,25 @@ function lookup(stand, p_throws, balls, strikes) {
 }
 
 function obp(rec) {
+  // Standard OBP = (H + BB + HBP) / (AB + BB + HBP + SF); `excluded` holds the
+  // PAs outside that denominator (sac bunts, catcher interference, truncated PAs).
   if (!rec) return 0;
-  return OBP_OUTCOMES.reduce((s, o) => s + (rec.props[o] || 0), 0);
+  const onBase = OBP_OUTCOMES.reduce((s, o) => s + (rec.raw[o] || 0), 0);
+  const denom = rec.total - (rec.excluded || 0);
+  return denom > 0 ? onBase / denom : 0;
 }
 
 function poolRecords(r1, r2) {
   if (!r1 && !r2) return null;
-  if (!r1) return { props: { ...r2.props }, total: r2.total };
-  if (!r2) return { props: { ...r1.props }, total: r1.total };
+  if (!r1) return { props: { ...r2.props }, raw: { ...r2.raw }, total: r2.total, excluded: r2.excluded };
+  if (!r2) return { props: { ...r1.props }, raw: { ...r1.raw }, total: r1.total, excluded: r1.excluded };
   const total = r1.total + r2.total;
-  const props = {};
+  const props = {}, raw = {};
   OUTCOMES.forEach(o => {
     props[o] = (r1.props[o] * r1.total + r2.props[o] * r2.total) / total;
+    raw[o] = r1.raw[o] + r2.raw[o];
   });
-  return { props, total };
+  return { props, raw, total, excluded: r1.excluded + r2.excluded };
 }
 
 function computeHypothesis(balls, strikes) {
@@ -1174,7 +1179,7 @@ function buildHypothesisGrid() {
       <div class="hyp-card-body">
         <span class="delta-badge ${badgeCls}">${fmtDelta(delta)}</span>
         <div class="obp-row">
-          <span style="color:var(--green)">Opp <span class="obp-val">${fmt(oppOBP)}</span></span>
+          <span style="color:var(--green)" title="On-base percentage, opposite-handed matchups">Opp <span class="obp-val">${fmt(oppOBP)}</span></span>
           <span>Same <span class="obp-val">${fmt(sameOBP)}</span></span>
         </div>
         <div class="obp-bar-wrap">

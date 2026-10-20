@@ -66,6 +66,11 @@ def fetch_all():
     return pd.concat(frames, ignore_index=True)
 
 
+# Events that are not plate appearances in the official OBP denominator
+# (AB + BB + HBP + SF). sac_fly stays in; field_error stays in AB.
+OBP_EXCLUDED_EVENTS = {"sac_bunt", "sac_bunt_double_play", "catcher_interf", "truncated_pa"}
+
+
 def load_cache(cache_dir="~/.pybaseball/cache"):
     """Build the Statcast frame from pybaseball's local daily cache; no network.
 
@@ -100,17 +105,21 @@ def process(df):
     # Any remaining NaN → other
     pa["outcome"] = pa["outcome"].fillna("other")
 
+    # PAs not in the standard OBP denominator (sac bunts, catcher interference, ...)
+    pa["excluded"] = pa["events"].isin(OBP_EXCLUDED_EVENTS).astype(int)
+
     # Count by group
     grp = (
         pa.groupby(["stand", "p_throws", "balls", "strikes", "outcome"])
-        .size()
-        .reset_index(name="n")
+        .agg(n=("outcome", "size"), excluded=("excluded", "sum"))
+        .reset_index()
     )
 
     # Pivot to wide, compute proportions
     records = []
     for (stand, p_throws, balls, strikes), sub in grp.groupby(["stand", "p_throws", "balls", "strikes"]):
         total = sub["n"].sum()
+        excluded = int(sub["excluded"].sum())
         counts_dict = dict(zip(sub["outcome"], sub["n"]))
         props = {o: round(counts_dict.get(o, 0) / total, 5) for o in OUTCOME_ORDER}
         raw   = {o: int(counts_dict.get(o, 0)) for o in OUTCOME_ORDER}
@@ -120,6 +129,7 @@ def process(df):
             "balls": int(balls),
             "strikes": int(strikes),
             "total": int(total),
+            "excluded": excluded,
             "props": props,
             "raw": raw,
         })
